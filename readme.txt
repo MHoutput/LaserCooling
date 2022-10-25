@@ -5,18 +5,16 @@ Because this applet is incredibly instructive in courses on ultracold gases, I m
 clone in today's most popular programming language: Python. 
 
 The applet is written using the Pygame and NumPy packages. Only these two libraries and the
-Python Standard Library are required for running the code. Pygame and NumPy can be installed
-by running:
+Python Standard Library are required for running the code. The Python code can be packaged into
+a Windows executable using PyInstaller on the provided LaserCooling_addfiles.spec file.
+The executable can then be run on a machine that does not have Python, Pygame, or NumPy installed. 
+To make the executable, open a command prompt, go to the directory with this file, and run the
+following commands:
 
 pip install pygame
 pip install numpy
-
-The Python code can be packaged into a Windows executable using PyInstaller, that can be run
-without installing Python, Pygame, or NumPy. This can be done by running PyInstaller in this folder
-using the provided .spec file:
-
 pip install PyInstaller
-pyinstaller Evaporation_addfiles.spec
+pyinstaller LaserCooling_addfiles.spec
 
 Feel free to modify or distribute this applet at will, as long as you do not remove the credits
 below.
