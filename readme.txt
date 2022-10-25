@@ -16,6 +16,8 @@ pip install numpy
 pip install PyInstaller
 pyinstaller LaserCooling_addfiles.spec
 
+The resulting executable can be found in the dist/ folder.
+
 Feel free to modify or distribute this applet at will, as long as you do not remove the credits
 below.
 
