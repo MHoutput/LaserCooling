@@ -7,3 +7,7 @@ dist/
 
 # Ignore the executable file, the user should build this executable themselves by running PyInstaller
 *.exe
+
+
+# Ignore the GIMP files in the images directory
+images/*.xcf
