@@ -8,13 +8,17 @@ The applet is written using the Pygame and NumPy packages. Only these two librar
 Python Standard Library are required for running the code. The Python code can be packaged into
 a Windows executable using PyInstaller on the provided LaserCooling_addfiles.spec file.
 The executable can then be run on a machine that does not have Python, Pygame, or NumPy installed. 
-To make the executable, open a command prompt, go to the directory with this file, and run the
-following commands:
+To make the executable, make sure you have Python installed on your machine. Then, open a command
+prompt, go to the directory with this file, and run the following commands:
 
 pip install pygame
 pip install numpy
 pip install PyInstaller
 pyinstaller LaserCooling_addfiles.spec
+
+The executable can then be found in the dist folder.
+Instead of running PyInstaller, you can also install Pygame and Numpy, and then run
+the LaserCooling.py file directly using Python.
 
 Feel free to modify or distribute this applet at will, as long as you do not remove the credits
 below.

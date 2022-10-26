@@ -1,8 +1,9 @@
 # Ignore the PyCharm-specific .idea/ folder
 .idea/
 
-# Ignore the build/ folder created by PyInstaller
+# Ignore the folders created by PyInstaller
 build/
+dist/
 
 # Ignore the executable file, the user should build this executable themselves by running PyInstaller
 *.exe
