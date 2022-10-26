@@ -4,5 +4,5 @@
 # Ignore the build/ folder created by PyInstaller
 build/
 
-# Ignore the executable file, the user should build this executable themselves
+# Ignore the executable file, the user should build this executable themselves by running PyInstaller
 *.exe
