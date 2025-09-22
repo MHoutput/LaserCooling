@@ -34,7 +34,6 @@ BOTTOM_BORDER = 160
 WINDOW_WIDTH = LEFT_BORDER + PLAY_WIDTH + RIGHT_BORDER
 WINDOW_HEIGHT = TOP_BORDER + PLAY_HEIGHT + BOTTOM_BORDER
 
-
 # Colors
 WHITE = (255, 255, 255)
 LIGHT_GRAY = (192, 192, 192)
@@ -59,6 +58,74 @@ SPEED_OF_LIGHT_DOPPLER = 16  # Speed of light used for the Doppler effect, in pi
 FREQ_MIN = SPEED_OF_LIGHT_DOPPLER/700  # Frequency of the lowest color, in arbitrary units
 FREQ_MAX = SPEED_OF_LIGHT_DOPPLER/400  # Frequency of the highest color, in arbitrary units
 
+KEYBOARD_LAYOUTS = ["QWERTY", "AZERTY", "ARROWS"]
+# Action keys in order: intensity lower, intensity higher, frequency lower, frequency higher, laser up, laser down
+ACTION_KEYS = [(K_q, K_e, K_a, K_d, K_w, K_s),  # QWERTY layout
+               (K_a, K_e, K_q, K_d, K_z, K_s),  # AZERTY layout
+               (K_d, K_g, K_LEFT, K_RIGHT, K_UP, K_DOWN)]  # Control with arrow keys
+KEYBOARD_CHANGE_KEY = "space"
+KEYBOARD_BUTTON_SIZE = 48
+SLIDER_SENSITIVITY = 0.02  # percentage of slider that is changed every frame
+VALID_KEYS = {
+    "a": K_a,
+    "b": K_b,
+    "c": K_c,
+    "d": K_d,
+    "e": K_e,
+    "f": K_f,
+    "g": K_g,
+    "h": K_h,
+    "i": K_i,
+    "j": K_j,
+    "k": K_k,
+    "l": K_l,
+    "m": K_m,
+    "n": K_n,
+    "o": K_o,
+    "p": K_p,
+    "q": K_q,
+    "r": K_r,
+    "s": K_s,
+    "t": K_t,
+    "u": K_u,
+    "v": K_v,
+    "w": K_w,
+    "x": K_x,
+    "y": K_y,
+    "z": K_z,
+    "0": K_0,
+    "1": K_1,
+    "2": K_2,
+    "3": K_3,
+    "4": K_4,
+    "5": K_5,
+    "6": K_6,
+    "7": K_7,
+    "8": K_8,
+    "9": K_9,
+    "left": K_LEFT,
+    "right": K_RIGHT,
+    "up": K_UP,
+    "down": K_DOWN,
+    "!": K_EXCLAIM,
+    "#": K_HASH,
+    "(": K_LEFTPAREN,
+    ")": K_RIGHTPAREN,
+    "@": K_AT,
+    "back": K_BACKSPACE,
+    "bslash": K_BACKSLASH,
+    "enter": K_RETURN,
+    "equals": K_EQUALS,
+    "esc": K_ESCAPE,
+    "fslash": K_SLASH,
+    "minus": K_MINUS,
+    "plus": K_PLUS,
+    "space": K_SPACE,
+    "tab": K_TAB,
+    "times": K_ASTERISK
+}  # Valid keys to accept from the keyboard
+KEYBOARD_CHANGE_KEY_NUMBER = VALID_KEYS[KEYBOARD_CHANGE_KEY]
+
 
 # ===== MAIN FUNCTION =====
 def main():
@@ -72,24 +139,30 @@ def main():
     font_normal = pygame.font.SysFont('verdana', 18)
     font_large = pygame.font.SysFont('verdana', 24)
 
-    # Initialize some mouse variables
+    # Initialize some mouse and keyboard variables variables
     mouse_xy = (0, 0)
     mouse_is_down = False
+    keyboard_layout_index = 0
+    keyboard_layout = KEYBOARD_LAYOUTS[0]
+    action_keys = ACTION_KEYS[0]
 
     # Create the slider bars, and the buttons to change level
-    slider_intensity = Slider(display_surf, (LEFT_BORDER + 192, WINDOW_HEIGHT-BOTTOM_BORDER + 32,
+    slider_intensity = Slider(display_surf, (LEFT_BORDER + 192, WINDOW_HEIGHT-BOTTOM_BORDER + 16,
                                              WINDOW_WIDTH - RIGHT_BORDER - 192 - (LEFT_BORDER + 192), 12),
-                              'horizontal', (0.5, 2.), None, (16, 24), 'Intensity', font_normal, LIGHT_GRAY)
-    slider_hue = HueSlider(display_surf, (LEFT_BORDER + 192, WINDOW_HEIGHT-BOTTOM_BORDER + 96,
+                              'horizontal', (0.5, 2.), None, (16, 24), 'Intensity', font_normal, LIGHT_GRAY,
+                              action_keys[0], action_keys[1])
+    slider_hue = HueSlider(display_surf, (LEFT_BORDER + 192, WINDOW_HEIGHT-BOTTOM_BORDER + 72,
                                           WINDOW_WIDTH - RIGHT_BORDER - 192 - (LEFT_BORDER + 192), 12),
-                           'horizontal', (HUE_MIN, HUE_MAX), 141., (16, 24), 'Frequency', font_normal, LIGHT_GRAY)
+                           'horizontal', (HUE_MIN, HUE_MAX), 141., (16, 24), 'Frequency', font_normal, LIGHT_GRAY,
+                           action_keys[2], action_keys[3])
     button_nextlevel = ImageButton(display_surf, (WINDOW_WIDTH - 80, WINDOW_HEIGHT-80, 64, 64),
                                    'images/Next_idle.png', 'images/Next_hover.png')
     button_prevlevel = ImageButton(display_surf, (16, WINDOW_HEIGHT-80, 64, 64),
                                    'images/Prev_idle.png', 'images/Prev_hover.png')
 
     # Create the laser
-    laser = Laser(display_surf, (WINDOW_WIDTH - RIGHT_BORDER, TOP_BORDER, 64, PLAY_HEIGHT))
+    laser = Laser(display_surf, (WINDOW_WIDTH - RIGHT_BORDER, TOP_BORDER, 64, PLAY_HEIGHT), 30, "images/Laser.png",
+                  action_keys[5], action_keys[4])
 
     # Initialize the atom and photon lists
     atoms = []
@@ -102,6 +175,7 @@ def main():
     current_level = 1
     hsv_color = None
     flag_restart = False
+    keys_down = [] # List of pressed keys
 
     # Main game loop:
     while True:
@@ -121,6 +195,23 @@ def main():
                 mouse_xy = event.pos
                 mouse_is_clicked = False
                 mouse_is_down = False
+            elif event.type == KEYDOWN:
+                if event.key not in keys_down:
+                    keys_down.append(event.key)
+                if event.key == KEYBOARD_CHANGE_KEY_NUMBER:
+                    # Change keyboard layout if spacebar is pressed
+                    keyboard_layout_index = (keyboard_layout_index + 1) % len(KEYBOARD_LAYOUTS)
+                    keyboard_layout = KEYBOARD_LAYOUTS[keyboard_layout_index]
+                    action_keys = ACTION_KEYS[keyboard_layout_index]
+                    slider_intensity.set_button_key(action_keys[0], lower=True)
+                    slider_intensity.set_button_key(action_keys[1], lower=False)
+                    slider_hue.set_button_key(action_keys[2], lower=True)
+                    slider_hue.set_button_key(action_keys[3], lower=False)
+                    laser.set_button_key(action_keys[5], lower=True)
+                    laser.set_button_key(action_keys[4], lower=False)
+            elif event.type == KEYUP:
+                while event.key in keys_down:
+                    keys_down.remove(event.key)
         mouse_state = (mouse_xy, mouse_is_clicked, mouse_is_down)
 
         # Create new atoms with a delay between them
@@ -139,24 +230,24 @@ def main():
         # Draw the gray borders on the edges of the screen:
         draw_borders(display_surf)
         # Draw the text on top of the borders:
-        draw_text(display_surf, atoms, font_large, font_normal, current_level)
+        draw_text(display_surf, atoms, font_large, font_normal, current_level, keyboard_layout, font_normal)
 
         # Draw and control the buttons, the slider bars, and the laser
         # The 'control' function draws the button, and return True if the button is clicked
-        if current_level < 3 and button_nextlevel.control(mouse_state):
+        if current_level < 3 and button_nextlevel.control(mouse_state, keys_down):
             # "and" is short-circuited, so the button isn't drawn if current_level = 3
             current_level = min(current_level+1, 3)
             flag_restart = True
-        if current_level > 1 and button_prevlevel.control(mouse_state):
+        if current_level > 1 and button_prevlevel.control(mouse_state, keys_down):
             current_level = max(current_level-1, 1)
             flag_restart = True
         if current_level > 1:
             # The 'control' function draws the slider, and returns the value it is currently on
-            color_hue = slider_hue.control(mouse_state)
+            color_hue = slider_hue.control(mouse_state, keys_down)
         else:
             color_hue = 140
-        laser.set_fire_rate(slider_intensity.control(mouse_state))
-        laser.control_shoot(mouse_state, color_hue, photons)
+        laser.set_fire_rate(slider_intensity.control(mouse_state, keys_down))
+        laser.control_shoot(mouse_state, keys_down, color_hue, photons)
 
         if flag_restart:
             # Re-setup the room by clearing all particles, and resetting the atom timer
@@ -356,7 +447,7 @@ def draw_borders(surface):
     pygame.draw.rect(surface, BLACK, (LEFT_BORDER, TOP_BORDER, PLAY_WIDTH, PLAY_HEIGHT), 1)
 
 
-def draw_text(surface, atoms, title_font, score_font, level):
+def draw_text(surface, atoms, title_font, score_font, level, keyboard_layout, keyboard_font):
     # Draw all the necessary text on the screen
 
     # Title
@@ -379,6 +470,16 @@ def draw_text(surface, atoms, title_font, score_font, level):
     score_text = score_font.render(score_string, True, LIGHT_GRAY)
     score_text_xy = (LEFT_BORDER + 6, TOP_BORDER + PLAY_HEIGHT + 6)
     surface.blit(score_text, score_text_xy)
+
+    # Keyboard layout
+    keyboard_text = keyboard_font.render(keyboard_layout, True, LIGHT_GRAY)
+    keyboard_text_size = keyboard_font.size(keyboard_layout)
+    keyboard_text_xy = (0.5*WINDOW_WIDTH - 20, WINDOW_HEIGHT - 0.5*KEYBOARD_BUTTON_SIZE - 0.65*keyboard_text_size[1])
+    surface.blit(keyboard_text, keyboard_text_xy)
+    keyboard_button_xy = (0.5*WINDOW_WIDTH - KEYBOARD_BUTTON_SIZE - 24, WINDOW_HEIGHT - KEYBOARD_BUTTON_SIZE)
+    temp_image = pygame.image.load("images/keys/"+KEYBOARD_CHANGE_KEY+".png")
+    scaled_image = pygame.transform.smoothscale(temp_image, (KEYBOARD_BUTTON_SIZE, KEYBOARD_BUTTON_SIZE))
+    surface.blit(scaled_image, keyboard_button_xy)
 
 
 # ===== BUTTONS AND SLIDERS ===== #
@@ -421,7 +522,7 @@ class Button:  # Bare-bones button, we are likely not going to make any of these
     def draw(self, mouse_state):
         pygame.draw.rect(self.surface, BLACK, self.bounding_rectangle)
 
-    def control(self, mouse_state):
+    def control(self, mouse_state, keys_down):
         # This function can be called in the main game loop to handle the entire button
         self.draw(mouse_state)
         if self.is_active(mouse_state):
@@ -466,7 +567,8 @@ class ImageButton(Button):
 class Slider:  # A slider bar
 
     def __init__(self, surface, bounding_rectangle, slider_direction='horizontal', minmax=(0., 1.), starting_value=None,
-                 slider_size=(16, 16), text_string='', text_font=None, text_color=(0, 0, 0)):
+                 slider_size=(16, 16), text_string='', text_font=None, text_color=(0, 0, 0), button_lower=None,
+                 button_higher=None):
         self.surface = surface
         self.bounding_rectangle = bounding_rectangle
         self.x = bounding_rectangle[0]
@@ -492,6 +594,8 @@ class Slider:  # A slider bar
         else:
             self.text_font = text_font
         self.text_color = text_color
+        self.set_button_key(button_lower, lower=True)
+        self.set_button_key(button_higher, lower=False)
 
     def get_slider_activation(self, slider_xy):
         if self.direction == 'vertical':
@@ -515,6 +619,20 @@ class Slider:  # A slider bar
     def set_slider_value(self, value):
         self.activation = min(max((value - self.min_value)/(self.max_value - self.min_value), 0), 1)
         return self.get_slider_value()
+
+    def set_button_key(self, key, lower=True):
+        key_name = "a"
+        for (key_name, key_id) in VALID_KEYS.items():
+            if key_id == key:
+                break
+        temp_image = pygame.image.load("images/keys/"+key_name+".png")
+        scaled_image = pygame.transform.smoothscale(temp_image, (KEYBOARD_BUTTON_SIZE, KEYBOARD_BUTTON_SIZE))
+        if lower:
+            self.button_lower = key
+            self.lower_button_image = scaled_image
+        else:
+            self.button_higher = key
+            self.higher_button_image = scaled_image
 
     def check_mouse(self, mouse_xy):
         # Checks if the mouse is on the slider
@@ -560,13 +678,23 @@ class Slider:  # A slider bar
                    self.y + self.height/2 + self.slider_half_height)
         self.surface.blit(text_surf, text_xy)
 
-    def control(self, mouse_state):
+        # Draw the button images
+        self.surface.blit(self.lower_button_image, (self.x - KEYBOARD_BUTTON_SIZE - 4,
+                                                    self.y - 0.5*(KEYBOARD_BUTTON_SIZE - self.height)))
+        self.surface.blit(self.higher_button_image, (self.x + self.width + 4,
+                                                     self.y - 0.5 * (KEYBOARD_BUTTON_SIZE - self.height)))
+
+    def control(self, mouse_state, keys_down):
         # This function can be called in the main game loop to handle the entire slider
-        # mouse_state is a tuple of the form (mouse_xy, mouse_is_down)
+        # mouse_state is a tuple of the form (mouse_xy, mouse_is_clicked, mouse_is_down)
         mouse_xy = mouse_state[0]
         self.draw()
         if self.is_sliding(mouse_state):
             self.activation = self.get_slider_activation(mouse_xy)
+        if self.button_lower in keys_down:
+            self.activation = min(max(self.activation - SLIDER_SENSITIVITY, 0), 1)
+        if self.button_higher in keys_down:
+            self.activation = min(max(self.activation + SLIDER_SENSITIVITY, 0), 1)
         return self.get_slider_value()
 
 
@@ -602,17 +730,26 @@ class HueSlider(Slider):  # Exactly the same slider bar, but the background is c
                    self.y + self.height / 2 + self.slider_half_height)
         self.surface.blit(text_surf, text_xy)
 
+        # Draw the button images
+        self.surface.blit(self.lower_button_image, (self.x - KEYBOARD_BUTTON_SIZE - 4,
+                                                    self.y - 0.5*(KEYBOARD_BUTTON_SIZE - self.height)))
+        self.surface.blit(self.higher_button_image, (self.x + self.width + 4,
+                                                     self.y - 0.5 * (KEYBOARD_BUTTON_SIZE - self.height)))
+
 
 class Laser(Slider):  # The laser is technically a slider
 
-    def __init__(self, surface, bounding_rectangle, firing_delay=30, image_path='images/Laser.png'):
+    def __init__(self, surface, bounding_rectangle, firing_delay=30, image_path='images/Laser.png', button_lower=None,
+                 button_higher=None):
+        self.old_bounding_rectangle = bounding_rectangle
         x, y, width, height = bounding_rectangle
         temp_image = pygame.image.load(image_path)
         image_width = width
         image_height = int(temp_image.get_height()*image_width/temp_image.get_width())  # Uniformly scale image
-        self.image = pygame.transform.scale(temp_image, (image_width, image_height))
-        new_bounding_rectangle = (x, y + image_height/2, width, height - image_height)  # Cut off top and bottom
-        super().__init__(surface, new_bounding_rectangle, 'vertical', (0., 1.), None, (image_width, image_height))
+        self.image = pygame.transform.smoothscale(temp_image, (image_width, image_height))
+        self.new_bounding_rectangle = (x, y + image_height/2, width, height - image_height)  # Cut off top and bottom
+        super().__init__(surface, self.new_bounding_rectangle, 'vertical', (0., 1.), None, (image_width, image_height),
+                         button_lower=button_lower, button_higher=button_higher)
         self.firing_delay = int(firing_delay)
         self.timer = 0
 
@@ -622,14 +759,20 @@ class Laser(Slider):  # The laser is technically a slider
     def draw(self):
         self.surface.blit(self.image, (self.get_slider_xy()[0] - self.slider_half_width,
                                        self.get_slider_xy()[1] - self.slider_half_height))
+        # Draw the button images
+        x2, y2, width2, height2 = self.old_bounding_rectangle
+        self.surface.blit(self.lower_button_image, (x2 + 0.5*width2 - 0.5 * KEYBOARD_BUTTON_SIZE,
+                                                    y2 + height2))
+        self.surface.blit(self.higher_button_image, (x2 + 0.5*width2 - 0.5 * KEYBOARD_BUTTON_SIZE,
+                                                     y2 - KEYBOARD_BUTTON_SIZE))
 
-    def control_shoot(self, mouse_state, photon_hue, photons):
+    def control_shoot(self, mouse_state, keys_down, photon_hue, photons):
         self.timer = (self.timer + 1) % self.firing_delay
         if self.timer == 0:
             photon_xy = (self.get_slider_xy()[0] - self.slider_half_width, self.get_slider_xy()[1])
             new_photon = Photon(np.array(photon_xy), np.array((-SPEED_OF_LIGHT, 0)), (photon_hue, 100, 100))
             photons.append(new_photon)
-        super().control(mouse_state)
+        super().control(mouse_state, keys_down)
 
 
 if __name__ == '__main__':
