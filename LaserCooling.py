@@ -241,11 +241,8 @@ def main():
         if current_level > 1 and button_prevlevel.control(mouse_state, keys_down):
             current_level = max(current_level-1, 1)
             flag_restart = True
-        if current_level > 1:
-            # The 'control' function draws the slider, and returns the value it is currently on
-            color_hue = slider_hue.control(mouse_state, keys_down)
-        else:
-            color_hue = 140
+        # The 'control' function draws the slider, and returns the value it is currently on
+        color_hue = slider_hue.control(mouse_state, keys_down)
         laser.set_fire_rate(slider_intensity.control(mouse_state, keys_down))
         laser.control_shoot(mouse_state, keys_down, color_hue, photons)
 
